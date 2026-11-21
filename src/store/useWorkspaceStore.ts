@@ -3,8 +3,11 @@ import { createSeedProjects } from '../data/seedProjects';
 import { storageManager } from '../services/storageManager';
 import {
   ConflictError,
+  ForbiddenError,
+  fetchMe,
   fetchWorkspace,
   saveWorkspace,
+  type CurrentUser,
 } from '../services/workspaceApi';
 import {
   ASSET_STATUS_META,
@@ -143,8 +146,10 @@ export function useWorkspaceStore() {
   const justHydratedRef = useRef(false);
   const [hydrated, setHydrated] = useState(false);
   const [syncState, setSyncState] = useState<
-    'menghubungkan' | 'siap' | 'menyimpan' | 'konflik' | 'galat'
+    'menghubungkan' | 'siap' | 'menyimpan' | 'konflik' | 'galat' | 'ditolak'
   >('menghubungkan');
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [syncInfo, setSyncInfo] = useState<{ updatedAt: string | null; updatedBy: string | null }>({
     updatedAt: null,
     updatedBy: null,
@@ -1168,7 +1173,9 @@ export function useWorkspaceStore() {
   // ── sinkronisasi server (tahap 1) ────────────────────────────────
   const hydrateFromServer = useCallback(async () => {
     try {
-      const data = await fetchWorkspace();
+      setSyncMessage(null);
+      const [me, data] = await Promise.all([fetchMe(), fetchWorkspace()]);
+      setCurrentUser(me);
       if (data.payload) {
         if (Array.isArray(data.payload.projects)) {
           setProjects(data.payload.projects as ContentProject[]);
@@ -1227,6 +1234,9 @@ export function useWorkspaceStore() {
         .catch((error) => {
           if (error instanceof ConflictError) {
             setSyncState('konflik');
+          } else if (error instanceof ForbiddenError) {
+            setSyncState('ditolak');
+            setSyncMessage(error.message);
           } else {
             setSyncState('galat');
           }
@@ -1274,6 +1284,8 @@ export function useWorkspaceStore() {
     exportWorkspaceJson,
     syncState,
     syncInfo,
+    syncMessage,
+    currentUser,
     reloadWorkspace,
   };
 }

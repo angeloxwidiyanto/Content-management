@@ -24,6 +24,28 @@ export class ConflictError extends Error {
   }
 }
 
+export class ForbiddenError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export type CurrentUser = {
+  name: string;
+  email: string;
+  role: string;
+  canApprove: boolean;
+};
+
+export async function fetchMe(): Promise<CurrentUser> {
+  const response = await fetch('/api/content/me', {
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+  });
+  if (!response.ok) throw new Error(`Gagal memuat identitas (${response.status})`);
+  return (await response.json()) as CurrentUser;
+}
+
 export async function fetchWorkspace(): Promise<WorkspaceResponse> {
   const response = await fetch('/api/content/workspace', {
     credentials: 'same-origin',
@@ -62,6 +84,13 @@ export async function saveWorkspace(
       version?: number;
     };
     throw new ConflictError(data.version ?? version);
+  }
+
+  if (response.status === 403) {
+    const data = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
+    throw new ForbiddenError(
+      data.error?.message ?? 'Tidak punya wewenang untuk tindakan ini.'
+    );
   }
 
   if (!response.ok) {

@@ -864,6 +864,21 @@ export default function App() {
             </div>
           )}
 
+          {store.syncState === 'ditolak' && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-[12px] border border-red-200 bg-red-50 px-4 py-2.5 text-[12px] text-red-800 shadow-lg">
+              <span className="font-medium">
+                {store.syncMessage ?? 'Tindakan ini butuh wewenang persetujuan konten.'}
+              </span>
+              <button
+                type="button"
+                onClick={() => void store.reloadWorkspace()}
+                className="shrink-0 rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-red-700"
+              >
+                Kembalikan
+              </button>
+            </div>
+          )}
+
           {store.syncState === 'galat' && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-[12px] border border-red-200 bg-red-50 px-4 py-2.5 text-[12px] text-red-800 shadow-lg">
               <span className="font-medium">
@@ -884,11 +899,15 @@ export default function App() {
               ? 'Menyimpan ke server…'
               : store.syncState === 'siap'
                 ? 'Tersimpan di server'
-                : store.syncState === 'konflik'
-                  ? 'Perlu muat ulang'
+                : store.syncState === 'ditolak'
+                  ? 'Perubahan ditolak server'
+                  : store.syncState === 'konflik'
+                    ? 'Perlu muat ulang'
                   : store.syncState === 'galat'
                     ? 'Hanya lokal'
                     : 'Menghubungkan…'}
+            {store.currentUser ? ` · ${store.currentUser.name}` : ''}
+            {store.currentUser?.canApprove ? ' · peninjau' : ''}
           </div>
         </div>
       </ErrorBoundary>
