@@ -1,0 +1,30 @@
+# content-management.gkykgd.org — Cadence (kalender & produksi konten)
+#
+# Prasyarat:
+#   1. A record content-management.gkykgd.org -> 103.52.114.168 (GoDaddy).
+#   2. Container gky-content jalan di network gky-kelapa-gading_default.
+#
+# Pasang ke /home/gkykgd-server/apps/gky-kelapa-gading/Caddyfile, lalu:
+#   docker exec gky-caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+#   docker exec gky-caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+#
+# Login dicek oleh nginx gky-content lewat /api/auth/gate milik gky-internal,
+# jadi Caddy tidak perlu konfigurasi auth tambahan.
+
+content-management.gkykgd.org {
+    reverse_proxy gky-content:80
+
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        X-XSS-Protection "1; mode=block"
+        -Server
+    }
+
+    encode gzip zstd
+
+    log {
+        output file /var/log/caddy/gky-content-access.log
+    }
+}
