@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Apple HIG Neutral Material & Semantic Palette */
+  --color-studio-canvas: #F5F5F7;
+  --color-studio-surface: #FFFFFF;
+  --color-studio-sidebar: #EFEFF2;
+  --color-studio-recessed: #EBEBEF;
+  --color-studio-hairline: #E5E5EA;
+  --color-studio-ink: #1D1D1F;
+  --color-studio-ink-muted: #515154;
+  --color-studio-ink-subtle: #6E6E73;
+  --color-studio-accent: #0071E3;
+  --color-studio-accent-hover: #0077ED;
+  --color-studio-accent-pressed: #0062CC;
+  --color-studio-green: #1F8A4C;
+  --color-studio-amber: #B25E09;
+  --color-studio-red: #D70015;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: #1D1D1F;
+    background-color: #F5F5F7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+
+  button,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Apple Liquid Glass Vibrancy Materials */
+.apple-glass-bar {
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.apple-glass-sidebar {
+  background-color: rgba(245, 245, 247, 0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.apple-glass-sheet {
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  box-shadow:
+    0 24px 64px -12px rgba(0, 0, 0, 0.18),
+    0 4px 16px -4px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.apple-glass-toast {
+  background-color: rgba(29, 29, 31, 0.88);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow:
+    0 12px 32px -6px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+
+/* Concentric Apple Segmented Control Thumb */
+.apple-segment-active {
+  background-color: #FFFFFF;
+  color: #1D1D1F;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 0.5px 1px rgba(0, 0, 0, 0.06),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+/* Subtle macOS-style scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(29, 29, 31, 0.16);
+  border-radius: 9999px;
+  border: 1.5px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(29, 29, 31, 0.32);
+  border: 1.5px solid transparent;
+  background-clip: content-box;
+}
+
+/* Drag-and-Drop Onion Skin Layers */
+@keyframes onionSkinAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.975) translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.onion-skin-origin {
+  opacity: 0.34;
+  filter: saturate(0.28);
+  transform: scale(0.985);
+  border-style: dashed !important;
+  border-color: rgba(29, 29, 31, 0.28) !important;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(29, 29, 31, 0.025) 0px,
+    rgba(29, 29, 31, 0.025) 6px,
+    rgba(255, 255, 255, 0.7) 6px,
+    rgba(255, 255, 255, 0.7) 12px
+  );
+  box-shadow: none !important;
+}
+
+.onion-skin-target {
+  background-color: rgba(0, 113, 227, 0.065);
+  border: 1.5px dashed rgba(0, 113, 227, 0.52);
+  box-shadow:
+    0 10px 24px -12px rgba(0, 113, 227, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: onionSkinAppear 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
