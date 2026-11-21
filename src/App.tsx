@@ -848,6 +848,48 @@ export default function App() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {store.syncState === 'konflik' && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-[12px] border border-amber-300 bg-amber-50 px-4 py-2.5 text-[12px] text-amber-900 shadow-lg">
+              <span className="font-medium">
+                Data sudah diubah orang lain. Muat ulang sebelum menyimpan lagi.
+              </span>
+              <button
+                type="button"
+                onClick={() => void store.reloadWorkspace()}
+                className="shrink-0 rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-700"
+              >
+                Muat ulang
+              </button>
+            </div>
+          )}
+
+          {store.syncState === 'galat' && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-[12px] border border-red-200 bg-red-50 px-4 py-2.5 text-[12px] text-red-800 shadow-lg">
+              <span className="font-medium">
+                Tidak terhubung ke server — perubahan hanya tersimpan di browser ini.
+              </span>
+              <button
+                type="button"
+                onClick={() => void store.reloadWorkspace()}
+                className="shrink-0 rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-red-700"
+              >
+                Coba lagi
+              </button>
+            </div>
+          )}
+
+          <div className="fixed bottom-4 left-4 z-40 rounded-full border border-black/[0.08] bg-white/85 px-3 py-1 text-[10px] font-medium text-[#6E6E73] shadow-sm backdrop-blur">
+            {store.syncState === 'menyimpan'
+              ? 'Menyimpan ke server…'
+              : store.syncState === 'siap'
+                ? 'Tersimpan di server'
+                : store.syncState === 'konflik'
+                  ? 'Perlu muat ulang'
+                  : store.syncState === 'galat'
+                    ? 'Hanya lokal'
+                    : 'Menghubungkan…'}
+          </div>
         </div>
       </ErrorBoundary>
     </MotionConfig>

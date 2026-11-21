@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createSeedProjects } from '../data/seedProjects';
 import { storageManager } from '../services/storageManager';
 import {
+  ConflictError,
+  fetchWorkspace,
+  saveWorkspace,
+} from '../services/workspaceApi';
+import {
   ASSET_STATUS_META,
   ActivityCategory,
   ActivityLogEntry,
@@ -133,6 +138,17 @@ export function useWorkspaceStore() {
     loadInitialActivityLogs(loadInitialProjects())
   );
   const [toast, setToast] = useState<ToastNotice | null>(null);
+  const [serverVersion, setServerVersion] = useState(0);
+  const versionRef = useRef(0);
+  const justHydratedRef = useRef(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [syncState, setSyncState] = useState<
+    'menghubungkan' | 'siap' | 'menyimpan' | 'konflik' | 'galat'
+  >('menghubungkan');
+  const [syncInfo, setSyncInfo] = useState<{ updatedAt: string | null; updatedBy: string | null }>({
+    updatedAt: null,
+    updatedBy: null,
+  });
   const [liveStreamActive, setLiveStreamActive] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string>(() =>
     new Date().toISOString()
@@ -1149,6 +1165,85 @@ export function useWorkspaceStore() {
     showToast('Exported workspace backup (JSON)');
   }, [recordLog, showToast]);
 
+  // ── sinkronisasi server (tahap 1) ────────────────────────────────
+  const hydrateFromServer = useCallback(async () => {
+    try {
+      const data = await fetchWorkspace();
+      if (data.payload) {
+        if (Array.isArray(data.payload.projects)) {
+          setProjects(data.payload.projects as ContentProject[]);
+        }
+        if (Array.isArray(data.payload.activityLogs)) {
+          setActivityLogs(data.payload.activityLogs as ActivityLogEntry[]);
+        }
+        versionRef.current = data.version;
+        setServerVersion(data.version);
+        setSyncInfo({ updatedAt: data.updatedAt, updatedBy: data.updatedBy });
+        justHydratedRef.current = true;
+        setSyncState('siap');
+      } else {
+        // Server masih kosong: unggah workspace lokal sebagai isi awal.
+        const seeded = await saveWorkspace(0, {
+          projects: loadInitialProjects(),
+          activityLogs: loadInitialActivityLogs(loadInitialProjects()),
+        });
+        versionRef.current = seeded.version;
+        setServerVersion(seeded.version);
+        justHydratedRef.current = true;
+        setSyncState('siap');
+      }
+    } catch {
+      // Tanpa server, aplikasi tetap jalan dengan salinan lokal.
+      setSyncState('galat');
+    } finally {
+      setHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    void hydrateFromServer();
+  }, [hydrateFromServer]);
+
+  // Simpan otomatis (debounce) setiap kali proyek atau log berubah.
+  const saveTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    // Lewati satu kali: perubahan state ini berasal dari hidrasi server, bukan
+    // dari tindakan pengguna.
+    if (justHydratedRef.current) {
+      justHydratedRef.current = false;
+      return;
+    }
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => {
+      setSyncState((prev) => (prev === 'konflik' ? prev : 'menyimpan'));
+      void saveWorkspace(versionRef.current, { projects, activityLogs })
+        .then((result) => {
+          versionRef.current = result.version;
+          setServerVersion(result.version);
+          setSyncState((prev) => (prev === 'konflik' ? prev : 'siap'));
+          setSyncInfo({ updatedAt: new Date().toISOString(), updatedBy: null });
+        })
+        .catch((error) => {
+          if (error instanceof ConflictError) {
+            setSyncState('konflik');
+          } else {
+            setSyncState('galat');
+          }
+        });
+    }, 900);
+    return () => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    };
+    // sengaja tanpa serverVersion: memakainya akan memicu simpan berulang
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects, activityLogs, hydrated]);
+
+  const reloadWorkspace = useCallback(async () => {
+    setSyncState('menghubungkan');
+    await hydrateFromServer();
+  }, [hydrateFromServer]);
+
   return {
     projects,
     activityLogs,
@@ -1177,5 +1272,8 @@ export function useWorkspaceStore() {
     logPerformanceSnapshot,
     resetDemoWorkspace,
     exportWorkspaceJson,
+    syncState,
+    syncInfo,
+    reloadWorkspace,
   };
 }
